@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Similarity of auditory rhythm patterns</title>
+    <script src="jspsych/jspsych.js"></script>
+    <script src="jspsych/jspsychsheet.js"></script>
+    <script src="jspsych/plugin-survey-text.js"></script>
+    <script src="jspsych/plugin-preload.js"></script>
+    <script src="jspsych/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/plugin-html-button-response.js"></script>
+    <script src="jspsych/plugin-html-slider-response.js"></script>
+    <script src="jspsych/plugin-audio-keyboard-response.js"></script>
+    <link href="jspsych/jspsych.css" rel="stylesheet" type="text/css"/>
+
+    <style>
+        .jspsych-display-element {
+            font-size: 24px;
+        }
+    </style>
+</head>
+  <body></body>
+  <script>
+    var jsPsych = initJsPsych({
+        show_progress_bar: true,
+        on_finish: function () {
+            jsPsych.data.get().localSave('csv','Data.csv');        }
+    });
+    var timeline = [];
+
+    var preload = {
+    type: jsPsychPreload,
+    auto_preload: true
+    }
+
+    var idInputTrial = {
+            type: jsPsychSurveyText,
+            questions: [
+                {prompt: 'Participant ID:', placeholder: 'Please type in your UserID', required: true},
+            ]
+    };
+    timeline.push(idInputTrial);
+
+    var welcome = {
+        type: jsPsychHtmlButtonResponse,
+            stimulus: `
+            <p>Welcome to the experiment.</p>
+            <p>In this study, we want to learn about how you perceive rhythm.</p>
+            `,
+            choices:['Continue to instructions']
+    };
+    timeline.push(welcome);
+
+    var instructions1 = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+        <p style="text-align: left; width: 1000px;">In this experiment you will listen to a number of rhythms, played on the drum.</br>
+            They are presented in pairs. For every such pair you shall judge the similarity between the rhythms,</br>
+            how similar you think the two rhythms are be- tween themselves.</br>
+            The judgement shall be made on a scale with the number 10 as the highest value.</br>
+            The number 10 denotes a perfect similarity between the rhythms (it sounds like the same rhythm both times).</br>
+            In all other cases you thus use numbers lower than 10 in such a way that the lower the similarity is, the lower the number.</br>
+            If you find it necessary to use a finer gradation, you may use one decimal.</br>
+            Try to listen as \'spontaneously\' as possible.</br>
+            Do not think of the rhythms as written in musical notation or anything like that!</br>
+            It is the similarity between rhythms when you are listening to them which we want to study</p>
+        `,
+        choices:['Next']
+    };
+    timeline.push(instructions1);
+
+    var start = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+            <p>Now you are ready to start the experiment.</p>
+            <p>Remember, think about how different the two rhythms are from each other.</p>
+            <p></p>
+            <p>Click \"Next\" to proceed<p>
+            `,
+        choices:['Next']
+    };
+    timeline.push(start);
+
+    var audioStimuli = ['sound/Rhythm1.mp3','sound/Rhythm2.mp3', 'sound/Rhythm3.mp3', 'sound/Rhythm4.mp3'];
+    
+    function shuffle(array) {
+        var currentIndex = array.length, temporaryValue, randomIndex;
+        
+        while (0 !== currentIndex) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
+    }
+    return array;
+    }
+
+    audioStimuli = shuffle(audioStimuli);
+    
+    var list_of_pairs = Array();
+
+    for (let i = 0; i < audioStimuli.length; i++) {
+        for (let j = 0; j < audioStimuli.length; j++) {
+  	        list_of_pairs.push([audioStimuli[i],audioStimuli[j]]);
+        }  
+    }
+
+    var audioStimuli = shuffle(list_of_pairs)
+    
+    for (var i = 0; i < audioStimuli.length; i++) {
+        for (var i = 0; i < audioStimuli.length; i++) {
+            var audio1 = {
+                type: jsPsychAudioKeyboardResponse,
+                stimulus: audioStimuli[i][0],
+                choices: "NO_KEYS",
+                prompt: "Listen carefully to the rhythms.",
+                trial_ends_after_audio: true
+            };
+
+            var delay1 = {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: '',
+                prompt: "Listen carefully to the rhythms.",
+                trial_duration: 1000,
+                response_ends_trial: false
+            }
+                
+            var audio2 = {
+                type: jsPsychAudioKeyboardResponse,
+                stimulus: audioStimuli[i][1],
+                choices: "NO_KEYS",
+                prompt: "Listen carefully to the rhythms.",
+                trial_ends_after_audio: true
+            };
+
+            var slider = {
+                type: jsPsychHtmlSliderResponse,
+                stimulus: '<p>How <strong>similar</strong> do you think these two rhythms are?</p>',
+                labels: ['Minimum similarity (0)', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Perfect similarity (10)'],
+                step: 0.1,
+                prompt: '<p></p>',
+                slider_width: 1000,
+                require_movement: true,
+                button_label: 'Next'
+            };
+
+            timeline.push(audio1, delay1, audio2, slider);
+            }
+        };
+
+    var end = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+        <p style="text-align: left; width: 500px;">You've come to the end of the experiment.</br>
+            This is a reproduction of the study by Gabrielsson (1973).</br></br></br>
+            Gabrielsson, A. (1973). Similarity ratings and dimension analyses of auditory rhythm patterns. 1. <em>Scandinavian Journal of Psychology, 14</em>(1), 138-160</p>
+        `,
+        choices:['End experiment and upload my data'],
+        on_finish: function(data) {
+        },
+    };
+    timeline.push(end);
+
+    var all_data = jsPsych.data.get();
+    console.log(all_data.csv());
+
+    jsPsych.run(timeline);
+
+  </script>
+</html>
